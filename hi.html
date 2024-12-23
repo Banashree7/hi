@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banana Disease Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+            margin: 0;
+            background-color: #f9f9f9;
+        }
+        h1 {
+            color: #2c3e50;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1em;
+            background-color: #2c3e50;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #34495e;
+        }
+        #result {
+            font-size: 1.2em;
+            margin-top: 20px;
+            color: #333;
+        }
+        #loading {
+            font-size: 1.2em;
+            color: #888;
+        }
+        #preview {
+            margin-top: 20px;
+            max-width: 100%;
+            height: auto;
+            display: none;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            button {
+                width: 100%;
+                font-size: 1.2em;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5em;
+            }
+            button {
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Banana Disease Detection</h1>
+    <p>Upload an image of a banana plant leaf to predict its disease.</p>
+
+    <!-- Image upload form -->
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" name="image" id="image" accept="image/*" required><br>
+        <button type="submit">Upload Image</button>
+    </form>
+
+    <!-- Image preview -->
+    <img id="preview" alt="Image Preview">
+
+    <!-- Display predicted disease -->
+    <div id="result"></div>
+
+    <!-- Display loading message -->
+    <div id="loading" style="display: none;">Predicting...</div>
+
+    <!-- JavaScript for handling the form submission, image preview, and prediction -->
+    <script>
+        document.getElementById('image').addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.getElementById('preview');
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        document.getElementById('uploadForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            // Show loading message
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('result').textContent = '';
+
+            // Create form data
+            const formData = new FormData();
+            formData.append('image', document.getElementById('image').files[0]);
+
+            // Send POST request to Flask server
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Hide loading message
+                document.getElementById('loading').style.display = 'none';
+
+                if (data.predicted_disease) {
+                    // Display prediction result
+                    document.getElementById('result').textContent = 'Predicted Disease: ' + data.predicted_disease;
+                } else {
+                    // Handle error if no disease is predicted
+                    document.getElementById('result').textContent = 'Error: ' + (data.error || 'Something went wrong');
+                }
+            })
+            .catch(error => {
+                // Hide loading message and show error
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('result').textContent = 'Error: ' + error.message;
+            });
+        });
+    </script>
+
+</body>
+</html>
